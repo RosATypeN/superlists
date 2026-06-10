@@ -34,3 +34,14 @@ class HomePageTest(TestCase):
 
         new_item = Item.objects.first()
         self.assertEqual(new_item.text, 'A new list item')
+        
+    def test_displays_all_list_items(self):
+        Item.objects.create(text='itemey 1')
+        Item.objects.create(text='itemey 2')
+
+        request = HttpRequest()
+
+        response = home_page(request)
+
+        self.assertIn(b'itemey 1', response.content)
+        self.assertIn(b'itemey 2', response.content)

@@ -10,10 +10,17 @@ def home_page(request):
         )
         return redirect('/')
 
+    items = Item.objects.all()
+
     return HttpResponse(
         '<html>'
         '<title>To-Do lists</title>'
         '<body>'
+        + ''.join(
+            f'<div>{item.text}</div>'
+            for item in items
+        )
+        +
         '<form method="POST">'
         '<input name="item_text">'
         '</form>'
