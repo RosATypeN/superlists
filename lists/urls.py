@@ -1,6 +1,10 @@
 from django.urls import path
-from lists import views
+from . import views
 
 urlpatterns = [
-    path('<int:list_id>/', views.view_list, name='view_list'),
+    path(
+        '<int:list_id>/',
+        views.list_page,
+        name='list_view'
+    ),
 ]
