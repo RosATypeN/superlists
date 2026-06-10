@@ -1,14 +1,8 @@
 from django.db import models
 
-
 class List(models.Model):
-    pass
-
+    pass  # 当前阶段不需要额外字段
 
 class Item(models.Model):
     text = models.TextField(default='')
-    list = models.ForeignKey(
-        List,
-        default=None,
-        on_delete=models.CASCADE
-    )
+    list = models.ForeignKey(List, default=None, on_delete=models.CASCADE)
