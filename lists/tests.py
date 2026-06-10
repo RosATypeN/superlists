@@ -3,6 +3,7 @@ from django.urls import resolve
 from lists.views import home_page
 from django.http import HttpRequest
 from lists.models import Item
+from django.test import TestCase, Client
 
 class HomePageTest(TestCase):
     def test_root_url_resolves_to_home_page_view(self):
@@ -34,7 +35,7 @@ class HomePageTest(TestCase):
 
         new_item = Item.objects.first()
         self.assertEqual(new_item.text, 'A new list item')
-        
+
     def test_displays_all_list_items(self):
         Item.objects.create(text='itemey 1')
         Item.objects.create(text='itemey 2')
@@ -45,3 +46,12 @@ class HomePageTest(TestCase):
 
         self.assertIn(b'itemey 1', response.content)
         self.assertIn(b'itemey 2', response.content)
+
+    def test_can_save_a_POST_request_and_retrieve_it_later(self):
+        client = Client()
+
+        client.post('/', data={'item_text': 'A new list item'})
+
+        response = client.get('/')
+
+        self.assertContains(response, 'A new list item')
