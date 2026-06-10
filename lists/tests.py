@@ -24,3 +24,22 @@ class NewListTest(TestCase):
         )
         # 验证空文本不会被保存
         self.assertEqual(Item.objects.filter(list=list_).count(), 0)
+
+    def test_multiple_lists_have_separate_urls(self):
+        self.client.post('/', data={'item_text': 'Buy peacock feathers'})
+        first_list = List.objects.first()
+
+        self.client.post('/', data={'item_text': 'Buy milk'})
+        second_list = List.objects.last()
+
+        self.assertNotEqual(first_list.id, second_list.id)
+
+    def test_items_are_saved_to_correct_list(self):
+        first_list = List.objects.create()
+        second_list = List.objects.create()
+
+        Item.objects.create(text='Item 1', list=first_list)
+        Item.objects.create(text='Item 2', list=second_list)
+
+        self.assertEqual(first_list.item_set.count(), 1)
+        self.assertEqual(second_list.item_set.count(), 1)
