@@ -23,7 +23,6 @@ class HomePageTest(TestCase):
         response = home_page(request)
         self.assertIn(b'<input', response.content)
         self.assertIn(b'name="item_text"', response.content)
-    
     def test_can_save_a_POST_request(self):
         request = HttpRequest()
         request.method = 'POST'
@@ -35,7 +34,6 @@ class HomePageTest(TestCase):
 
         new_item = Item.objects.first()
         self.assertEqual(new_item.text, 'A new list item')
-
     def test_displays_all_list_items(self):
         Item.objects.create(text='itemey 1')
         Item.objects.create(text='itemey 2')
@@ -46,7 +44,6 @@ class HomePageTest(TestCase):
 
         self.assertIn(b'itemey 1', response.content)
         self.assertIn(b'itemey 2', response.content)
-
     def test_can_save_a_POST_request_and_retrieve_it_later(self):
         client = Client()
 
@@ -55,3 +52,11 @@ class HomePageTest(TestCase):
         response = client.get('/')
 
         self.assertContains(response, 'A new list item')
+    def test_redirects_after_POST(self):
+        response = self.client.post(
+            '/',
+            data={'item_text': 'A new list item'}
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], '/')

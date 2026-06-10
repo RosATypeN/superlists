@@ -1,5 +1,4 @@
-from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from lists.models import Item
 
 
@@ -12,18 +11,8 @@ def home_page(request):
 
     items = Item.objects.all()
 
-    return HttpResponse(
-        '<html>'
-        '<title>To-Do lists</title>'
-        '<body>'
-        + ''.join(
-            f'<div>{item.text}</div>'
-            for item in items
-        )
-        +
-        '<form method="POST">'
-        '<input name="item_text">'
-        '</form>'
-        '</body>'
-        '</html>'
+    return render(
+        request,
+        'home.html',
+        {'items': items}
     )
