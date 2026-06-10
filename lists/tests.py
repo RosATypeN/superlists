@@ -21,3 +21,12 @@ class HomePageTest(TestCase):
         response = home_page(request)
         self.assertIn(b'<input', response.content)
         self.assertIn(b'name="item_text"', response.content)
+    def test_can_save_a_POST_request(self):
+         request = HttpRequest()
+         request.method = 'POST'
+         request.POST['item_text'] = 'A new list item'
+
+         response = home_page(request)
+
+         self.assertEqual(response.status_code, 302)
+         self.assertEqual(response['location'], '/')
