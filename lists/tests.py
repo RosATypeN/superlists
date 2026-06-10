@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import resolve
 from lists.views import home_page
 from django.http import HttpRequest
+from lists.models import Item
 
 class HomePageTest(TestCase):
     def test_root_url_resolves_to_home_page_view(self):
@@ -21,12 +22,15 @@ class HomePageTest(TestCase):
         response = home_page(request)
         self.assertIn(b'<input', response.content)
         self.assertIn(b'name="item_text"', response.content)
+    
     def test_can_save_a_POST_request(self):
-         request = HttpRequest()
-         request.method = 'POST'
-         request.POST['item_text'] = 'A new list item'
+        request = HttpRequest()
+        request.method = 'POST'
+        request.POST['item_text'] = 'A new list item'
 
-         response = home_page(request)
+        home_page(request)
 
-         self.assertEqual(response.status_code, 302)
-         self.assertEqual(response['location'], '/')
+        self.assertEqual(Item.objects.count(), 1)
+
+        new_item = Item.objects.first()
+        self.assertEqual(new_item.text, 'A new list item')
