@@ -32,5 +32,5 @@ class Migration(migrations.Migration):
             name='list',
             field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='lists.list'),
             ),
-        migrations.RunPython(create_default_list),
+
     ]

@@ -1,67 +1,58 @@
-from django.test import TestCase, Client
-from django.urls import resolve
-from django.http import HttpRequest
-from lists.models import Item, List
-from lists.views import home_page
+from django.test import TestCase
+from lists.models import List, Item
 
 class HomePageTest(TestCase):
 
-    def test_root_url_resolves_to_home_page_view(self):
-        found = resolve('/')
-        self.assertEqual(found.func, home_page)
-
-    def test_home_page_returns_correct_html(self):
-        request = HttpRequest()
-        list_ = List.objects.create()
-        response = home_page(request)
-        self.assertTrue(response.content.startswith(b'<html>'))
-        self.assertIn(b'<title>To-Do lists</title>', response.content)
-        self.assertTrue(response.content.endswith(b'</html>'))
-
     def test_home_page_contains_input_box(self):
-        request = HttpRequest()
-        list_ = List.objects.create()
-        response = home_page(request)
-        self.assertIn(b'<input', response.content)
-        self.assertIn(b'name="item_text"', response.content)
+        response = self.client.get('/')
+        self.assertContains(response, '<title>To-Do Lists</title>')
+        self.assertContains(response, '<input')
+        self.assertContains(response, 'name="item_text"')
 
-    def test_can_save_a_POST_request(self):
-        list_ = List.objects.create()
-        request = HttpRequest()
-        request.method = 'POST'
-        request.POST['item_text'] = 'A new list item'
+class NewListTest(TestCase):
 
-        # 使用指定 list 保存
-        Item.objects.create(text=request.POST['item_text'], list=list_)
+    def test_can_save_a_POST_request_and_redirect(self):
+        # POST 到 /lists/new
+        response = self.client.post('/lists/new', data={'item_text': 'A new list item'})
+
+        self.assertEqual(List.objects.count(), 1)
+        self.assertEqual(Item.objects.count(), 1)
+
+        new_list_obj = List.objects.first()
+        new_item = Item.objects.first()
+
+        self.assertEqual(new_item.text, 'A new list item')
+        self.assertEqual(new_item.list, new_list_obj)
+        self.assertRedirects(response, f'/lists/{new_list_obj.id}/')
+
+class ListViewTest(TestCase):
+
+    def test_display_only_items_for_that_list(self):
+        correct_list = List.objects.create()
+        Item.objects.create(text='itemey 1', list=correct_list)
+        Item.objects.create(text='itemey 2', list=correct_list)
+
+        other_list = List.objects.create()
+        Item.objects.create(text='other item 1', list=other_list)
+        Item.objects.create(text='other item 2', list=other_list)
+
+        response = self.client.get(f'/lists/{correct_list.id}/')
+        self.assertContains(response, 'itemey 1')
+        self.assertContains(response, 'itemey 2')
+        self.assertNotContains(response, 'other item 1')
+        self.assertNotContains(response, 'other item 2')
+
+    def test_can_save_a_POST_request_to_existing_list(self):
+        correct_list = List.objects.create()
+        other_list = List.objects.create()
+
+        response = self.client.post(
+            f'/lists/{correct_list.id}/',
+            data={'item_text': 'A new item for existing list'}
+        )
 
         self.assertEqual(Item.objects.count(), 1)
         new_item = Item.objects.first()
-        self.assertEqual(new_item.text, 'A new list item')
-        self.assertEqual(new_item.list, list_)
-
-    def test_displays_all_list_items(self):
-        list_ = List.objects.create()
-        Item.objects.create(text='itemey 1', list=list_)
-        Item.objects.create(text='itemey 2', list=list_)
-
-        request = HttpRequest()
-        response = home_page(request)
-
-        self.assertIn(b'itemey 1', response.content)
-        self.assertIn(b'itemey 2', response.content)
-
-    def test_can_save_a_POST_request_and_retrieve_it_later(self):
-        client = Client()
-        list_ = List.objects.create()
-
-        Item.objects.create(text='A new list item', list=list_)
-
-        response = client.get('/')
-        self.assertContains(response, 'A new list item')
-
-    def test_redirects_after_POST(self):
-        list_ = List.objects.create()
-        client = Client()
-        response = client.post('/', data={'item_text': 'A new list item'})
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], '/')
+        self.assertEqual(new_item.text, 'A new item for existing list')
+        self.assertEqual(new_item.list, correct_list)
+        self.assertRedirects(response, f'/lists/{correct_list.id}/')
